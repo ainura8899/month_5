@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from movie_app.models import Director, Movie, Review
 from movie_app.serializers import MovieSerializer, DirectorSerializer, ReviewSerializer
 from rest_framework import status
+from django.db.models import Avg
 
 # Create your views here.
 
@@ -94,3 +95,12 @@ def review_detail_api_view(request, id):
 
     # step3: Return response as JSON
     return Response(data=data)
+
+@api_view(http_method_names=['GET'])
+def review_movie_api_view(request):
+    average_rating = Review.objects.aggregate(Avg('stars')).get('stars__avg', 0)
+    average_rating = round(average_rating, 1) if average_rating is not None else 0
+    return Response({'average_rating': average_rating})
+
+
+
