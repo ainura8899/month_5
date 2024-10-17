@@ -20,7 +20,7 @@ class MovieSerializer(serializers.ModelSerializer):
 
     class Meta: #это класс который не меняется
         model = Movie
-        fields = 'id comments category category_name search_words search_word_list title duration'.split()  # список из полей. Передаются id и title
+        fields = 'id comments category category_name search_words search_word_list title description director'.split()  # список из полей. Передаются id и title
         depth = 1 # обычно не используем, т.к. показывает все
         # fields = '__all__'
         # exclude = 'created text'.split()

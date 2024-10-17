@@ -21,17 +21,19 @@ class SearchWord(AbstractModel):
 
 class Director(models.Model):
     name = models.CharField(max_length=255)
-
+    # movie = models.ForeignKey(Movie, on_delete=models.PROTECT, null=True, blank=True) # в БД movie_id
     def __str__(self):
         return self.name
 
 class Movie(models.Model):
-    category = models.ForeignKey(Category, on_delete=models.PROTECT, null=True)
+    category = models.ForeignKey(Category, on_delete=models.PROTECT, null=True, blank=True) # в БД category_id
     search_words = models.ManyToManyField(SearchWord, blank=True)
     title = models.CharField(max_length=255)
     description = models.TextField(max_length=1000)
-    duration = models.DurationField()
-    director = models.ForeignKey(Director, on_delete=models.PROTECT)
+    #duration = models.DurationField(default=0)
+    director = models.ForeignKey(Director, on_delete=models.SET_NULL, null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    view_count = models.IntegerField(default=0)
 
     def __str__(self):
         return self.title
@@ -47,6 +49,8 @@ STARS = (
     (4, '****'),
     (5, '*****'),
 )
+
+
 
 class Review(models.Model):
     text = models.TextField()
