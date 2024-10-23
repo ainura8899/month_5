@@ -27,13 +27,13 @@ class Director(models.Model):
 
 class Movie(models.Model):
     category = models.ForeignKey(Category, on_delete=models.PROTECT, null=True, blank=True) # в БД category_id
-    search_words = models.ManyToManyField(SearchWord, blank=True)
+    # search_words = models.ManyToManyField(SearchWord, blank=True)
     title = models.CharField(max_length=255)
     description = models.TextField(max_length=1000)
-    #duration = models.DurationField(default=0)
+    #duration = models.PositiveIntegerField()
     director = models.ForeignKey(Director, on_delete=models.SET_NULL, null=True, blank=True)
-    is_active = models.BooleanField(default=True)
-    view_count = models.IntegerField(default=0)
+    # is_active = models.BooleanField(default=True)
+    # view_count = models.IntegerField(default=0)
 
     def __str__(self):
         return self.title

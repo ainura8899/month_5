@@ -4,6 +4,8 @@ from movie_app.models import Director, Movie, Review
 from movie_app.serializers import MovieSerializer, DirectorSerializer, ReviewSerializer
 from rest_framework import status
 from django.db.models import Avg
+from movie_app.serializers import MovieValidateSerializer, DirectorValidateSerializer, ReviewValidateSerializer
+
 
 # Create your views here.
 
@@ -11,6 +13,7 @@ from django.db.models import Avg
 def movie_list_create_api_view(request):
     if request.method == 'GET':
         #print(request.query_params)
+        #search = request.query_params.get('search', '')
         # step1: Collect movies (QuerySet) #собираем данные в виде списка Query
         movies = Movie.objects.all()
         #  movies = Movie.objects.select_related('category').prefetch_related('search_words','comments')
@@ -20,26 +23,32 @@ def movie_list_create_api_view(request):
         # step3: Return response as Json
         return Response(data=data)
     elif request.method == 'POST':
+        # step0: Validation of data (Existance, Type, Extra) # Extra - каждое поле можно проверить самостоятельно
+        serializer = MovieValidateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(status=status.HTTP_400_BAD_REQUEST,
+                             data=serializer.errors)
         # step1: Receive data from request body
-        title = request.data.get('title')
-        description = request.data.get('description')
-        is_active = request.data.get('is_active')
-        view_count = request.data.get('view_count')
-        category_id = request.data.get('category_id')
-        director_id = request.data.get('director_id')
-        search_words = request.data.get('search_words')
-        # print(title, description, is_active, view_count)
+        title = serializer.validated_data.get('title')
+        description = serializer.validated_data.get('description')
+        # duration = serializer.validated_data.get('duration')
+        # is_active = serializer.validated_data.get('is_active')
+        # view_count = serializer.validated_data.get('view_count')
+        category_id = serializer.validated_data.get('category_id')
+        director_id = serializer.validated_data.get('director_id')
+        # search_words = serializer.validated_data.get('search_words')
 
         # step2: Create movie by received data
         movie = Movie.objects.create(
             title=title,
             description=description,
-            is_active=is_active,
-            view_count=view_count,
+            # duration=duration,
+            # is_active=is_active,
+            # view_count=view_count,
             category_id=category_id, # Передаём экземпляр Category
             director_id=director_id # Передаём экземпляр Director
         )
-        movie.search_words.set(search_words)
+        # movie.search_words.set(search_words)
         movie.save()
 
         # step3: Return response with data and status - Это в зав-ти от проекта
@@ -62,12 +71,17 @@ def movie_detail_api_view(request, id):
         # step3: Return response as JSON  # возвращает ответ в виде Json
         return Response(data=data) # передаем список в Response/data
     elif request.method == 'PUT':
-        movie.title = request.data.get('title')
-        movie.description = request.data.get('description')
-        movie.is_active = request.data.get('is_active')
-        movie.view_count = request.data.get('view_count')
-        movie.category_id = request.data.get('category_id')
-        movie.director_id = request.data.get('director_id')
+        serializer = MovieValidateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(status=status.HTTP_400_BAD_REQUEST,
+                            data=serializer.errors)
+        movie.title = serializer.validated_data.get('title')
+        movie.description = serializer.validated_data('description')
+        # movie.duration = serializer.validated_data('duration')
+        # movie.is_active = serializer.validated_data('is_active')
+        # movie.view_count = serializer.validated_data('view_count')
+        movie.category_id = serializer.validated_data('category_id')
+        movie.director_id = serializer.validated_data('director_id')
         movie.save()
         return Response(data=MovieSerializer(movie).data,
                         status=status.HTTP_201_CREATED)
@@ -89,8 +103,13 @@ def director_list_api_view(request):
         # step3: Return response as Json
         return Response(data=data)
     elif request.method == 'POST':
+        # step0: Validation of data (Existance, Type, Extra)
+        serializer = DirectorValidateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(status=status.HTTP_400_BAD_REQUEST,
+                            data=serializer.errors)
         # step1: Receive data from request body
-        name = request.data.get('name')
+        name = serializer.validated_data.get('name')
         # movie_id = request.data.get('movie_id')
 
 
@@ -122,7 +141,11 @@ def director_detail_api_view(request, id):
         # step3: Return response as JSON
         return Response(data=data)
     elif request.method == 'PUT':
-        director.name = request.data.get('name')
+        serializer = DirectorValidateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(status=status.HTTP_400_BAD_REQUEST,
+                            data=serializer.errors)
+        director.name = serializer.validated_data.get('name')
         director.save()
         return Response(data=DirectorSerializer(director).data,
                         status=status.HTTP_201_CREATED)
@@ -143,10 +166,15 @@ def review_list_api_view(request):
         return Response(data=data)
 
     elif request.method == 'POST':
+        # step0: Validation of data (Existance, Type, Extra)
+        serializer = ReviewValidateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(status=status.HTTP_400_BAD_REQUEST,
+                            data=serializer.errors)
         # step1: Receive data from request body
-        text = request.data.get('text')
-        movie_id = request.data.get('movie_id')
-        stars = request.data.get('stars')
+        text = serializer.validated_data.get('text')
+        movie_id = serializer.validated_data.get('movie_id')
+        stars = serializer.validated_data.get('stars')
 
         # step2: Create review by received data
         reviews = Review.objects.create(
@@ -160,11 +188,13 @@ def review_list_api_view(request):
         return Response(status=status.HTTP_201_CREATED,
                         data={'reviews_id': reviews.id})
 
-        # print(title, description, is_active, view_count)
-
 
 @api_view(http_method_names=['GET', 'PUT', 'DELETE'])
 def review_detail_api_view(request, id):
+    serializer = ReviewValidateSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(status=status.HTTP_400_BAD_REQUEST,
+                        data=serializer.errors)
     # step1: Collect reviews (QuerySet)
     try:
         review = Review.objects.get(id=id)
@@ -178,8 +208,9 @@ def review_detail_api_view(request, id):
         # step3: Return response as JSON
         return Response(data=data)
     elif request.method == 'PUT':
-        review.text = request.data.get('text')
-        review.stars = request.data.get('stars')
+        review.text = serializer.validated_data.get('text')
+        review.movie_id = serializer.validated_data.get('movie_id')
+        review.stars = serializer.validated_data.get('stars')
         review.save()
         return Response(data=ReviewSerializer(review).data,
                         status=status.HTTP_201_CREATED)
